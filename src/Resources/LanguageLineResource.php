@@ -17,6 +17,7 @@ use Filament\Tables\Columns\ViewColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Kenepa\TranslationManager\Filters\NotTranslatedFilter;
 use Kenepa\TranslationManager\Pages\QuickTranslate;
@@ -123,9 +124,11 @@ class LanguageLineResource extends Resource
             TextColumn::make('group_and_key')
                 ->label(__('translation-manager::translations.group') . ' & ' . __('translation-manager::translations.key'))
                 ->searchable(query: function (Builder $query, string $search): Builder {
+                    $searchlower = strtolower($search);
+
                     return $query
-                        ->where('group', 'like', "%{$search}%")
-                        ->orWhere('key', 'like', "%{$search}%");
+                        ->where(DB::raw('lower(`group`)'), 'like', "%{$searchlower}%")
+                        ->orWhere(DB::raw('lower(`key`)'), 'like', "%{$searchlower}%");
                 })
                 ->getStateUsing(function (Model $record) {
                     return $record->group . '.' . $record->key;
@@ -134,8 +137,10 @@ class LanguageLineResource extends Resource
             ViewColumn::make('preview')
                 ->view('translation-manager::preview-column')
                 ->searchable(query: function (Builder $query, string $search): Builder {
+                    $searchlower = strtolower($search);
+
                     return $query
-                        ->where('text', 'like', "%{$search}%");
+                        ->where(DB::raw('lower(`text`)'), 'like', "%{$searchlower}%");
                 })
                 ->label(__('translation-manager::translations.preview-in-your-lang', ['lang' => app()->getLocale()]))
                 ->sortable(false),
